@@ -5,11 +5,13 @@ import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
 import android.view.KeyEvent
+import android.view.View
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.FrameLayout
 import android.widget.Toast
 
 class MainActivity : Activity() {
@@ -17,12 +19,16 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        webView = WebView(this)
-        setContentView(webView)
 
-        // Pastikan WebView langsung menerima fokus tombol remot
+        val rootLayout = FrameLayout(this)
+        webView = WebView(this)
+        rootLayout.addView(webView)
+        setContentView(rootLayout)
+
+        // Paksa fokus penuh ke WebView untuk navigasi D-Pad Android TV
         webView.isFocusable = true
         webView.isFocusableInTouchMode = true
+        webView.descendantFocusability = WebView.FOCUS_BLOCK_DESCENDANTS
         webView.requestFocus()
 
         val settings: WebSettings = webView.settings
@@ -37,13 +43,14 @@ class MainActivity : Activity() {
         webView.loadUrl("file:///android_asset/index.html")
     }
 
-    override fun onResume() {
-        super.onResume()
-        webView.requestFocus()
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) {
+            webView.requestFocus()
+        }
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        // Kunci tombol Back agar tidak keluar ke launcher lain
         if (event.keyCode == KeyEvent.KEYCODE_BACK) {
             return true
         }
@@ -58,17 +65,7 @@ class MainActivity : Activity() {
                 else -> null
             }
             if (jsKey != null) {
-                val script = """
-                    (function() {
-                        var ev = new KeyboardEvent('keydown', {
-                            key: '$jsKey',
-                            code: '$jsKey',
-                            bubbles: true,
-                            cancelable: true
-                        });
-                        document.dispatchEvent(ev);
-                    })();
-                """.trimIndent()
+                val script = "document.dispatchEvent(new KeyboardEvent('keydown', {key: '$jsKey', bubbles: true}));"
                 webView.evaluateJavascript(script, null)
                 return true
             }
