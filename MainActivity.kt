@@ -20,6 +20,11 @@ class MainActivity : Activity() {
         webView = WebView(this)
         setContentView(webView)
 
+        // Pastikan WebView langsung menerima fokus tombol remot
+        webView.isFocusable = true
+        webView.isFocusableInTouchMode = true
+        webView.requestFocus()
+
         val settings: WebSettings = webView.settings
         settings.javaScriptEnabled = true
         settings.domStorageEnabled = true
@@ -32,11 +37,17 @@ class MainActivity : Activity() {
         webView.loadUrl("file:///android_asset/index.html")
     }
 
-    override fun onBackPressed() {
-        // Mencegah tombol Back keluar dari launcher utama
+    override fun onResume() {
+        super.onResume()
+        webView.requestFocus()
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        // Kunci tombol Back agar tidak keluar ke launcher lain
+        if (event.keyCode == KeyEvent.KEYCODE_BACK) {
+            return true
+        }
+
         if (event.action == KeyEvent.ACTION_DOWN) {
             val jsKey = when (event.keyCode) {
                 KeyEvent.KEYCODE_DPAD_UP -> "ArrowUp"
@@ -47,10 +58,18 @@ class MainActivity : Activity() {
                 else -> null
             }
             if (jsKey != null) {
-                webView.evaluateJavascript(
-                    "document.dispatchEvent(new KeyboardEvent('keydown', {key: '$jsKey'}));",
-                    null
-                )
+                val script = """
+                    (function() {
+                        var ev = new KeyboardEvent('keydown', {
+                            key: '$jsKey',
+                            code: '$jsKey',
+                            bubbles: true,
+                            cancelable: true
+                        });
+                        document.dispatchEvent(ev);
+                    })();
+                """.trimIndent()
+                webView.evaluateJavascript(script, null)
                 return true
             }
         }
