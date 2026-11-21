@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
 import android.view.KeyEvent
+import android.view.ViewGroup
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
@@ -21,8 +22,14 @@ class MainActivity : Activity() {
 
         val rootLayout = FrameLayout(this)
         webView = WebView(this)
-        rootLayout.addView(webView)
-        setContentView(rootLayout)
+        
+        // Paksa WebView merentang penuh selebar & setinggi layar TV
+        val params = FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT
+        )
+        rootLayout.addView(webView, params)
+        setContentView(rootLayout, params)
 
         webView.isFocusable = true
         webView.isFocusableInTouchMode = true
