@@ -5,7 +5,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
 import android.view.KeyEvent
-import android.view.View
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
@@ -25,7 +24,6 @@ class MainActivity : Activity() {
         rootLayout.addView(webView)
         setContentView(rootLayout)
 
-        // Paksa fokus penuh ke WebView untuk navigasi D-Pad Android TV
         webView.isFocusable = true
         webView.isFocusableInTouchMode = true
         webView.descendantFocusability = WebView.FOCUS_BLOCK_DESCENDANTS
@@ -65,8 +63,7 @@ class MainActivity : Activity() {
                 else -> null
             }
             if (jsKey != null) {
-                val script = "document.dispatchEvent(new KeyboardEvent('keydown', {key: '$jsKey', bubbles: true}));"
-                webView.evaluateJavascript(script, null)
+                webView.evaluateJavascript("if(window.handleDpad) window.handleDpad('$jsKey');", null)
                 return true
             }
         }
